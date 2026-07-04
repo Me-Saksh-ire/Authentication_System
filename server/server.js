@@ -11,8 +11,11 @@ const app = express();
 const port = process.env.PORT || 4000;
 connectDB();
 
-// Read allowed origins from environment (comma-separated) or fall back to localhost.
-const rawAllowedOrigins = process.env.ALLOWED_ORIGINS || 'http://localhost:5173';
+// Read allowed origins from environment (comma-separated) or fall back to localhost + your Vercel frontend
+const rawAllowedOrigins =
+    process.env.ALLOWED_ORIGINS ||
+    'http://localhost:5173,https://authentication-system-sigma-six.vercel.app';
+
 const allowedOrigins = rawAllowedOrigins
     .split(',')
     .map(s => s.trim())
@@ -26,16 +29,13 @@ const isAllowedOrigin = (origin) => {
     return false;
 };
 
-app.use(express.json());  //It tells your Express server to automatically fetch the user input that are in JSON format
+app.use(express.json());
 
 app.use(cors({
     origin: function (origin, callback) {
-        if (!origin) return callback(null, true);
-
         if (isAllowedOrigin(origin)) {
             return callback(null, true);
         }
-
         const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
         return callback(new Error(msg), false);
     },
