@@ -11,27 +11,37 @@ const app = express();
 const port = process.env.PORT || 4000;
 connectDB();
 
-// Read allowed origins from environment (comma-separated) or fall back to localhost and Vercel dev URL
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,https://authentication-system-sigma-six.vercel.app')
+// Read allowed origins from environment (comma-separated) or fall back to localhost.
+const rawAllowedOrigins = process.env.ALLOWED_ORIGINS || 'http://localhost:5173';
+const allowedOrigins = rawAllowedOrigins
     .split(',')
     .map(s => s.trim())
     .filter(Boolean);
+
+const isAllowedOrigin = (origin) => {
+    if (!origin) return true;
+    if (allowedOrigins.includes(origin)) return true;
+    if (origin.endsWith('.vercel.app')) return true;
+    if (origin.endsWith('.onrender.com')) return true;
+    return false;
+};
 
 app.use(express.json());  //It tells your Express server to automatically fetch the user input that are in JSON format
 
 app.use(cors({
     origin: function (origin, callback) {
-        // Allow requests with no origin (like curl, mobile, or server-to-server)
         if (!origin) return callback(null, true);
 
-        if (allowedOrigins.includes(origin)) {
+        if (isAllowedOrigin(origin)) {
             return callback(null, true);
         }
 
         const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
         return callback(new Error(msg), false);
     },
-    credentials: true
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 app.use(cookieParser());
